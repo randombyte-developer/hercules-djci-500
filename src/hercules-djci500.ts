@@ -4,13 +4,12 @@ import { activate } from "@/utils";
 import { MidiControl } from "./controls/midiControl";
 import { MidiMapping } from "./midiMapping";
 import { DeckButton } from "./controls/deckButton";
+import { FineMidiControl } from "./controls/fineMidiControl";
 
 let decks: Deck[];
 let deckIndependentControls: MidiControl[];
 
 const controls: MidiControl[] = [];
-
-export const ENCODER_CENTER = 0x40;
 
 export function init(): void {
     
@@ -21,7 +20,7 @@ export function init(): void {
     let ignoreCrossfader = true;
 
     deckIndependentControls = [
-        new MidiControl("Crossfader", true, {
+        new FineMidiControl("Crossfader", {
             onValueChanged: value => {
                 if (ignoreCrossfader) return;
                 engine.setParameter("[Master]", "crossfader", value);
@@ -32,12 +31,12 @@ export function init(): void {
                 activate("[Library]", "MoveFocusForward");
             }
         }),
-        new MidiControl("Headphone", true, {
+        new FineMidiControl("Headphone", {
             onValueChanged: value => {
                 engine.setParameter("[Master]", "headGain", value * 0.5);
             }
         }),
-        new MidiControl("HeadphoneMix", true, {
+        new FineMidiControl("HeadphoneMix", {
             onValueChanged: value => {
                 engine.setParameter("[Master]", "headMix", value);
             }
@@ -54,7 +53,7 @@ export function init(): void {
     function traxControl(name: string, factor: number): MidiControl {
         return new MidiControl(name, false, {
             onNewValue: value => {
-                engine.setValue("[Library]", "MoveVertical", (value - ENCODER_CENTER) * factor);
+                engine.setValue("[Library]", "MoveVertical", value > 0x40 ? 1 : -1);
             }
         });
     }

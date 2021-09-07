@@ -4,7 +4,6 @@ import { DeckFineMidiControl } from "@controls/deckFineMidiControl";
 import { DeckButton } from "@controls/deckButton";
 import { toggleControl, activate, makeLedConnection, clamp } from "@/utils";
 import { MidiMapping } from "./midiMapping";
-import { ENCODER_CENTER } from "./hercules-djci500";
 
 export class Deck {
     public readonly index: number;
@@ -37,7 +36,7 @@ export class Deck {
             }),
 
             // Loop
-            new DeckButton(this.index, "AutoLoop", {
+            new DeckButton(this.index, "LoopButton", {
                 onPressed: () => {
                     this.activate(`beatloop_${this.getValue("beatloop_size")}_toggle`);
                 }
@@ -46,61 +45,68 @@ export class Deck {
             // Loop size
             new DeckButton(this.index, "LoopEncoder", {
                 onNewValue: value => {
-                    const forward = value > ENCODER_CENTER;
-                    this.activate(forward ? "loop_double" : "loop_halve");
+                    this.activate(value > 0x40 ? "loop_double" : "loop_halve");
                 }
             }),
 
             // Gain
-            new DeckMidiControl(this.index, "Gain", true, {
+            new DeckFineMidiControl(this.index, "Gain", {
                 onValueChanged: value => {
                     this.setParameter("pregain", value);
                 }
             }),
 
             // EQ
-            new DeckMidiControl(this.index, "EqLow", true, {
+            new DeckFineMidiControl(this.index, "EqLow", {
                 onValueChanged: value => {
                     engine.setParameter(eqGroup, "parameter1", value);
                 }
             }),
-            new DeckMidiControl(this.index, "EqMid", true, {
+            new DeckFineMidiControl(this.index, "EqMid", {
                 onValueChanged: value => {
                     engine.setParameter(eqGroup, "parameter2", value);
                 }
             }),
-            new DeckMidiControl(this.index, "EqHigh", true, {
+            new DeckFineMidiControl(this.index, "EqHigh", {
                 onValueChanged: value => {
                     engine.setParameter(eqGroup, "parameter3", value);
                 }
             }),
 
             // Quick Effect / Filter
-            new DeckMidiControl(this.index, "Filter", true, {
+            new DeckFineMidiControl(this.index, "Filter", {
                 onValueChanged: value => {
                     engine.setParameter(filterEffectGroup, "super1", value);
                 }
             }),
 
-            new DeckMidiControl(this.index, "Volume", true, {
+            new DeckFineMidiControl(this.index, "Volume", {
                 onValueChanged: value => {
                     this.setParameter("volume", value);
                 }
             }),
 
             // Beatjump
-            new DeckButton(this.index, "FxSelectEncoder", {
-                onNewValue: value => {
-                    const forward = value > ENCODER_CENTER;
-                    this.activate(forward ? "beatjump_forward" : "beatjump_backward");
+            new DeckButton(this.index, "Hotcue6", {
+                onPressed: () => {
+                    this.activate("beatjump_backward");
+                }
+            }),
+            new DeckButton(this.index, "Hotcue7", {
+                onPressed: () => {
+                    this.activate("beatjump_forward");
                 }
             }),
 
             // Beatjump size
-            new DeckButton(this.index, "FxSelectEncoderShifted", {
-                onNewValue: value => {
-                    const forward = value > ENCODER_CENTER;
-                    this.modifyAndClampBeatjumpSize(forward ? 2 : 0.5);
+            new DeckButton(this.index, "LoopIn", {
+                onPressed: () => {
+                    this.modifyAndClampBeatjumpSize(0.5);
+                }
+            }),
+            new DeckButton(this.index, "LoopOut", {
+                onPressed: () => {
+                    this.modifyAndClampBeatjumpSize(2);
                 }
             }),
 
@@ -121,21 +127,20 @@ export class Deck {
                     engine.scratchDisable(channel, true);
                 }
             }),
-
             new DeckMidiControl(this.index, "JogEncoder", false, {
                 onNewValue: value => {
                     if (engine.isScratching(this.channel)) {
-                        engine.scratchTick(this.channel, value - ENCODER_CENTER);
+                        engine.scratchTick(this.channel, value > 0x40 ? 1 : -1);
                     } else {
-                        this.setParameter("jog", (value - ENCODER_CENTER) / 10.0);
+                        this.setParameter("jog", value > 0x40 ? 1 : -1);
                     }
                 }
             })
         ];
 
         // Hotcues
-        const hotcueIndices = [0, 1, 2];
-        for (const hotcueIndex of hotcueIndices) {
+        const hotcueIndices = [0, 4];
+        hotcueIndices.forEach((padIndex, hotcueIndex) => {
             const hotcueNumber = hotcueIndex + 1;
 
             this.controls.push(new DeckButton(this.index, `Hotcue${hotcueIndex}`, {
@@ -148,8 +153,10 @@ export class Deck {
                     this.activate(`hotcue_${hotcueNumber}_clear`);
                 }
             }));
-            this.makeLedConnection(`hotcue_${hotcueNumber}_enabled`, `Hotcue${hotcueIndex}`);
-        }
+
+            this.makeLedConnection(`hotcue_${hotcueNumber}_enabled`, `Hotcue${padIndex}`, 0x5C); // green
+            this.makeLedConnection(`hotcue_${hotcueNumber}_enabled`, `Hotcue${padIndex}Shifted`, 0x60); // red
+        });
 
         // Load track
         this.controls.push(new DeckButton(this.index, "Load", {
@@ -171,7 +178,7 @@ export class Deck {
         // Leds
         this.makeLedConnection("play", "Play");
         this.makeLedConnection("pfl", "Pfl");
-        this.makeLedConnection("loop_enabled", "AutoLoop");
+        //this.makeLedConnection("loop_enabled", "LoopButton"); TODO
 
         this.triggerConnections();
     }
@@ -214,8 +221,8 @@ export class Deck {
         this.connections.push(engine.makeConnection(this.group, key, callback));
     }
 
-    private makeLedConnection(key: string, controlName: string) {
+    private makeLedConnection(key: string, controlName: string, ledValue: number = 0x7F) {
         const [status, midiNo] = MidiMapping.getMidiForControl(`${this.index}${controlName}`);
-        this.connections.push(makeLedConnection(this.group, key, status, midiNo));
+        this.connections.push(makeLedConnection(this.group, key, status, midiNo, ledValue));
     }
 }

@@ -1,3 +1,5 @@
+import { MidiMapping } from "./midiMapping";
+
 export function log(msg: any) {
     engine.log(`Hercules DJCI 500 Log: ${msg}`);
 }
@@ -14,8 +16,13 @@ export function activate(channel: string, key: string) {
     engine.setValue(channel, key, 1);
 }
 
-export function makeLedConnection(channel: string, key: string, midiLedStatus: number, midiLedNo: number): Connection {
+export function makeLedConnection(channel: string, key: string, midiLedStatus: number, midiLedNo: number, ledValue: number = 0x7F): Connection {
     return engine.makeConnection(channel, key, value => {
-        midi.sendShortMsg(midiLedStatus, midiLedNo, value * 0x7F);
+        midi.sendShortMsg(midiLedStatus, midiLedNo, value * ledValue);
     });
+}
+
+export function setLed(controlName: string, value: number) {
+    const [status, midiNo] = MidiMapping.getMidiForControl(controlName);
+    midi.sendShortMsg(status, midiNo, value);
 }
