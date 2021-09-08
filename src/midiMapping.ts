@@ -11,13 +11,13 @@ export class MidiMapping {
             0x25: "HeadphoneMixLsb",
             0x01: "TraxEncoder"
         },
-        0x160: {
+        0xB3: {
             0x01: "TraxEncoderShifted"
         },
         0x90: {
             0x00: "TraxButton"
         },
-        0x140: {
+        0x93: {
             0x00: "TraxButtonShifted"
         },
         0x91: {
@@ -34,7 +34,7 @@ export class MidiMapping {
             0x09: "0LoopIn",
             0x0A: "0LoopOut"
         },
-        0x141: {
+        0x94: {
             0x0D: "0LoadShifted",
             0x0C: "0PflShifted",
             0x2C: "0LoopButtonShifted",
@@ -48,20 +48,20 @@ export class MidiMapping {
             0x0A: "0JogEncoderTouched",
             0x08: "0TempoMsb",
             0x28: "0TempoLsb",
-            0x01: "0VolumeMsb",
-            0x21: "0VolumeLsb",
-            0x02: "0FilterMsb",
-            0x22: "0FilterLsb",
-            0x03: "0EqLowMsb",
-            0x23: "0EqLowLsb",
-            0x04: "0EqMidMsb",
-            0x24: "0EqMidLsb",
-            0x05: "0EqHighMsb",
-            0x25: "0EqHighLsb",
-            0x06: "0GainMsb",
-            0x26: "0GainLsb"
+            0x00: "0VolumeMsb",
+            0x20: "0VolumeLsb",
+            0x01: "0FilterMsb",
+            0x21: "0FilterLsb",
+            0x02: "0EqLowMsb",
+            0x22: "0EqLowLsb",
+            0x03: "0EqMidMsb",
+            0x23: "0EqMidLsb",
+            0x04: "0EqHighMsb",
+            0x24: "0EqHighLsb",
+            0x05: "0GainMsb",
+            0x25: "0GainLsb"
         },
-        0x161: {
+        0xB4: {
             0x0E: "0LoopEncoderShifted",
             0x09: "0JogEncoderUntouchedShifted",
             0x0A: "0JogEncoderTouchedShifted"
@@ -98,7 +98,7 @@ export class MidiMapping {
             0x09: "1LoopIn",
             0x0A: "1LoopOut"
         },
-        0x142: {
+        0x95: {
             0x0D: "1LoadShifted",
             0x0C: "1PflShifted",
             0x2C: "1LoopButtonShifted",
@@ -112,20 +112,20 @@ export class MidiMapping {
             0x0A: "1JogEncoderTouched",
             0x08: "1TempoMsb",
             0x28: "1TempoLsb",
-            0x01: "1VolumeMsb",
-            0x21: "1VolumeLsb",
-            0x02: "1FilterMsb",
-            0x22: "1FilterLsb",
-            0x03: "1EqLowMsb",
-            0x23: "1EqLowLsb",
-            0x04: "1EqMidMsb",
-            0x24: "1EqMidLsb",
-            0x05: "1EqHighMsb",
-            0x25: "1EqHighLsb",
-            0x06: "1GainMsb",
-            0x26: "1GainLsb"
+            0x00: "1VolumeMsb",
+            0x20: "1VolumeLsb",
+            0x01: "1FilterMsb",
+            0x21: "1FilterLsb",
+            0x02: "1EqLowMsb",
+            0x22: "1EqLowLsb",
+            0x03: "1EqMidMsb",
+            0x23: "1EqMidLsb",
+            0x04: "1EqHighMsb",
+            0x24: "1EqHighLsb",
+            0x05: "1GainMsb",
+            0x25: "1GainLsb"
         },
-        0x162: {
+        0xB5: {
             0x0E: "1LoopEncoderShifted",
             0x09: "1JogEncoderUntouchedShifted",
             0x0A: "1JogEncoderTouchedShifted"

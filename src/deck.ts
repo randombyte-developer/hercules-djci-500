@@ -2,14 +2,17 @@ import { MidiControl } from "@controls/midiControl";
 import { DeckMidiControl } from "@controls/deckMidiControl";
 import { DeckFineMidiControl } from "@controls/deckFineMidiControl";
 import { DeckButton } from "@controls/deckButton";
-import { toggleControl, activate, makeLedConnection, clamp } from "@/utils";
+import { toggleControl, activate, makeLedConnection, clamp, setLed } from "@/utils";
 import { MidiMapping } from "./midiMapping";
+import { tolerance } from "./hercules-djci500";
 
 export class Deck {
     public readonly index: number;
     public readonly controls: MidiControl[];
     private readonly connections: Connection[] = [];
     private readonly group: string;
+
+    private readonly rateControl: DeckFineMidiControl;
 
     constructor(readonly channel: number) {
         this.index = channel - 1;
@@ -27,6 +30,7 @@ export class Deck {
             new DeckButton(this.index, "Sync", {
                 onPressed: () => {
                     this.activate("beatsync");
+                    this.updateRateTakeoverLeds();
                 }
             }),
             new DeckButton(this.index, "Pfl", {
@@ -36,7 +40,7 @@ export class Deck {
             }),
 
             // Loop
-            new DeckButton(this.index, "LoopButton", {
+            new DeckButton(this.index, "Hotcue1", {
                 onPressed: () => {
                     this.activate(`beatloop_${this.getValue("beatloop_size")}_toggle`);
                 }
@@ -45,7 +49,7 @@ export class Deck {
             // Loop size
             new DeckButton(this.index, "LoopEncoder", {
                 onNewValue: value => {
-                    this.activate(value > 0x40 ? "loop_double" : "loop_halve");
+                    this.activate(value > 0x40 ? "loop_halve" : "loop_double");
                 }
             }),
 
@@ -110,12 +114,6 @@ export class Deck {
                 }
             }),
 
-            new DeckFineMidiControl(this.index, "Tempo", {
-                onValueChanged: value => {
-                    this.setParameter("rate", 1 - value);
-                }
-            }),
-
             // Jog wheel
             new DeckButton(this.index, "JogTouchButton", {
                 onPressed: () => {                    
@@ -138,17 +136,25 @@ export class Deck {
             })
         ];
 
+        this.rateControl = new DeckFineMidiControl(this.index, "Tempo", {
+            onValueChanged: value => {
+                this.setParameter("rate", value);
+                this.updateRateTakeoverLeds(value);
+            }
+        });
+        this.controls.push(this.rateControl);
+
         // Hotcues
         const hotcueIndices = [0, 4];
         hotcueIndices.forEach((padIndex, hotcueIndex) => {
             const hotcueNumber = hotcueIndex + 1;
 
-            this.controls.push(new DeckButton(this.index, `Hotcue${hotcueIndex}`, {
+            this.controls.push(new DeckButton(this.index, `Hotcue${padIndex}`, {
                 onValueChanged: pressed => {
                     this.setValue(`hotcue_${hotcueNumber}_activate`, pressed);
                 }
             }));
-            this.controls.push(new DeckButton(this.index, `Hotcue${hotcueIndex}Shifted`, {
+            this.controls.push(new DeckButton(this.index, `Hotcue${padIndex}Shifted`, {
                 onPressed: () => {
                     this.activate(`hotcue_${hotcueNumber}_clear`);
                 }
@@ -178,7 +184,11 @@ export class Deck {
         // Leds
         this.makeLedConnection("play", "Play");
         this.makeLedConnection("pfl", "Pfl");
-        //this.makeLedConnection("loop_enabled", "LoopButton"); TODO
+        this.makeLedConnection("loop_enabled", "Hotcue1", 0x6C); // orange
+
+        // Beatjump buttons
+        setLed(`${this.index}Hotcue6`, 0x63); // purple
+        setLed(`${this.index}Hotcue7`, 0x63);
 
         this.triggerConnections();
     }
@@ -187,6 +197,12 @@ export class Deck {
         for (const connection of this.connections) {
             connection.trigger();
         }
+    }
+
+    private updateRateTakeoverLeds(hardwareValue: number = this.rateControl.lastValue) {
+        const softwareValue = this.getParameter("rate");      
+        setLed(`${this.index}TempoLedUp`, +((softwareValue - hardwareValue) > tolerance));
+        setLed(`${this.index}TempoLedDown`, +((hardwareValue - softwareValue) > tolerance));
     }
 
     private modifyAndClampBeatjumpSize(factor: number) {

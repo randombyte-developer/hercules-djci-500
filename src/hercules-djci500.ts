@@ -6,6 +6,8 @@ import { MidiMapping } from "./midiMapping";
 import { DeckButton } from "./controls/deckButton";
 import { FineMidiControl } from "./controls/fineMidiControl";
 
+export const tolerance = 0.000001
+
 let decks: Deck[];
 let deckIndependentControls: MidiControl[];
 
@@ -53,7 +55,7 @@ export function init(): void {
     function traxControl(name: string, factor: number): MidiControl {
         return new MidiControl(name, false, {
             onNewValue: value => {
-                engine.setValue("[Library]", "MoveVertical", value > 0x40 ? 1 : -1);
+                engine.setValue("[Library]", "MoveVertical", value > 0x40 ? -1 : 1);
             }
         });
     }
