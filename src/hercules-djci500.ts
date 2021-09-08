@@ -35,12 +35,15 @@ export function init(): void {
         }),
         new FineMidiControl("Headphone", {
             onValueChanged: value => {
-                engine.setParameter("[Master]", "headGain", value * 0.5);
+                //engine.setParameter("[Master]", "headGain", value * 0.5);
             }
         }),
         new FineMidiControl("HeadphoneMix", {
             onValueChanged: value => {
-                engine.setParameter("[Master]", "headMix", value);
+                // Sadly this is a "hardware knob", meaning that the mixing of master and headphone
+                // is done in the controller and we don't have any control over that
+
+                //engine.setParameter("[Master]", "headMix", value);
             }
         }),
         // Center and ignore crossfader
@@ -73,7 +76,7 @@ export function midiInput(channel: number, midiNo: number, value: number, status
 
     const controlName = MidiMapping.mapping[status][midiNo];
     if (controlName == null) return;
-    engine.log(`${controlName}: ${value}`);
+    //engine.log(`${controlName}: ${value}`);
 
     for (const control of controls) {
         control.offerValue(controlName, value);

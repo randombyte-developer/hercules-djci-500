@@ -125,12 +125,17 @@ export class Deck {
                     engine.scratchDisable(channel, true);
                 }
             }),
-            new DeckMidiControl(this.index, "JogEncoder", false, {
+            new DeckMidiControl(this.index, "JogEncoderTouched", false, {
                 onNewValue: value => {
                     if (engine.isScratching(this.channel)) {
-                        engine.scratchTick(this.channel, value > 0x40 ? 1 : -1);
-                    } else {
-                        this.setParameter("jog", value > 0x40 ? 1 : -1);
+                        engine.scratchTick(this.channel, value > 0x40 ? -1 : 1);
+                    }
+                }
+            }),
+            new DeckMidiControl(this.index, "JogEncoderUntouched", false, {
+                onNewValue: value => {
+                    if (!engine.isScratching(this.channel)) {
+                        this.setParameter("jog", value > 0x40 ? -1 : 1);
                     }
                 }
             })
